@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+echo "---> Go Buildpack"
+
+# 1. GET ARGS
+layersdir=$1
+
+# ENV VARS
+platform_dir=$2
+env_dir=${platform_dir}/env
+echo "     env_dir: ${env_dir}"
+echo "     env vars:"
+if compgen -G "${env_dir}/*" > /dev/null; then
+  for var in ${env_dir}/*; do
+    declare "$(basename ${var})=$(<${var})"
+  done
+fi
+export | sed 's/^/       /'
+
+# 2. CREATE THE LAYER DIRECTORY
+golayer="$layersdir"/go
+mkdir -p "$golayer"
+
+# 3. DOWNLOAD GO
+echo "---> Downloading and extracting Go"
+go_url=https://golang.org/dl/go1.16.3.linux-amd64.tar.gz
+wget -q -O - "$go_url" | tar -xzf - -C "$golayer"
+
+# 4. MAKE GO AVAILABLE DURING LAUNCH
+echo -e 'launch = true' > "$layersdir/go.toml"
+
+# 5. MAKE GO AVAILABLE TO THIS SCRIPT
+export PATH="$golayer"/go/bin:$PATH
+
+# 6. BUILD THE APP
+go build -ldflags "-X main.Port=$PORT"
+
+# ========== ADDED ===========
+# 7. SET DEFAULT START COMMAND
+cat > "$layersdir/launch.toml" <<EOL
+[[processes]]
+type = "web"
+command = "./go-sample"
+EOL

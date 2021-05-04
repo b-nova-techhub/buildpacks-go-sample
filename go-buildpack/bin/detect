@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+
+if [[ -f *.go ]]; then
+   exit 100
+fi
