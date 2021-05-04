@@ -4,7 +4,6 @@ docker run \
     -v $PWD:/workspace -w /workspace \
     -u501 \
     buildpacksio/pack build go-sample \
-        --env "PORT=8081" \
         --builder=gcr.io/buildpacks/builder:v1
 
 # run the app
